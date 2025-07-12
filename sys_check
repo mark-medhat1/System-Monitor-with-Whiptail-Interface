@@ -1,0 +1,134 @@
+#!/bin/bash
+		
+
+#CHECK THE CPU USAGE
+cpu_info(){
+	output=$(top -b -n 1 |head -n 20)
+	whiptail --title "CPU Info and Usage" --msgbox --scrolltext "$output" 25 105
+}
+
+
+#CHECK THE MEMORY USAGE
+memory_usage(){
+	output=$(free -h)
+	whiptail --title "Memory Usage" --msgbox "$output" 15 85
+}
+
+
+#CHECK THE DISK USAGE
+disk_usage(){
+	output=$(df -hT)
+	whiptail --title "Disk Usage" --msgbox  --scrolltext "$output" 25 85
+}
+
+
+#CHECK THE NETWORK STATS
+network_stats(){
+	output=$(ifconfig)
+	whiptail --title "Network Stats" --msgbox --scrolltext "$output" 25 85
+}
+
+
+#SHOW USERS WHO USE THE SYSTEM 
+show_uptime(){
+	output=$(w)
+	whiptail --title "Uptime and Load of The User" --msgbox "$output" 25 95
+}
+
+#SHOW THE ERROR LOGS OF THE SYSTEM
+show_logs(){
+	output=$(journalctl -p 3 -xb |tail -n 20)
+	whiptail --title "System Logs (Errors)" --msgbox --scrolltext "$output" 25 120
+}
+
+#CHECK SERVICES 
+service_checker(){
+	service=$(whiptail --inputbox "Enter service name to check:" 10 50 3>&1 1>&2 2>&3)
+	if [[ -z "$service" ]]
+	then
+		whiptail --msgbox "invaild input." 8 40
+		return
+	fi
+
+	if systemctl list-unit-files |grep -q "^$service.service" 
+	then
+		active_status=$(systemctl is-active "$service")
+		enable_status=$(systemctl is-enabled "$service")
+		whiptail --msgbox "Service "$service" is "$active_status" & "$enable_status"" 10 50
+	else
+		whiptail --msgbox "Service "$service" not installed" 10 50
+	fi
+}
+
+
+
+#LOG REPORT OR BRIEF SYSTEM INFO
+log_report(){
+	logfile="$HOME/system_monitor_brief.log"
+	{
+        echo "------ Report: $(date) ------"
+        echo "🖥️ Uptime:"
+        uptime && w
+        echo ""
+	echo "-------------------------------------------------------------------"
+
+        echo "🧠 Memory:"
+        free -h
+        echo ""
+	echo "-------------------------------------------------------------------"
+
+        echo "📀 Disk:"
+        df -hT
+        echo ""
+	echo "-------------------------------------------------------------------"
+
+        echo "🔥 CPU:"
+        top -bn1 | grep "Cpu(s)"
+        echo ""
+	echo "-------------------------------------------------------------------"
+
+        echo "📡 Network:"
+        ip -br address
+        echo ""
+        echo "-------------------------------------------------------------------"
+}> "$logfile"
+        
+        if [[ -f "$logfile" ]]
+        then
+                whiptail --title "System Logs Brief" --textbox --scrolltext "$logfile" 25 95
+                whiptail --msgbox "Logs saved in "$logfile"" 10 50
+        else
+                whiptail --msgbox "Log file not found" 10 50
+        fi
+
+}
+
+
+		
+while true; do
+        choice=$(whiptail --title "Full System Monitor" --menu "Choose an Option" 20 60 10 \
+                "1" "CPU Info and Usage" \
+                "2" "Memory Usage" \
+                "3" "Disk Usage" \
+                "4" "Network Stats" \
+                "5" "Uptime and load" \
+                "6" "System Logs (Errors)" \
+		"7" "Service Checker" \
+		"8" "Brief System Logs" \
+                "9" "Exit" \
+                3>&1 1>&2 2>&3)
+
+        case $choice in
+                1) cpu_info ;;
+                2) memory_usage ;;
+                3) disk_usage ;;
+                4) network_stats ;;
+                5) show_uptime ;;
+                6) show_logs ;;
+		7) service_checker ;;
+		8) log_report ;;
+                9) exit ;;
+                *) exit ;;
+        esac
+done
+
