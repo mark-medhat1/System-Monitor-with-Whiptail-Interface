@@ -56,7 +56,7 @@ service_checker(){
 		enable_status=$(systemctl is-enabled "$service")
 		whiptail --msgbox "Service "$service" is "$active_status" & "$enable_status"" 10 50
 	else
-		whiptail --msgbox "Service "$service" not installed" 10 50
+		whiptail --msgbox "Service "$service" not found" 10 50
 	fi
 }
 

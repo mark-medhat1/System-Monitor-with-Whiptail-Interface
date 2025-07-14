@@ -1,0 +1,126 @@
+#!/bin/bash
+
+RED='\e[31m'
+GREEN='\e[32m'
+YELLOW='\e[33m'
+CYAN='\e[36m'
+NC='\e[0m'
+		
+
+#CHECK THE CPU USAGE
+cpu_info(){
+	output=$(top -b -n 1 |head -n 20)
+	echo -e "${CYAN}$output${NC}"
+	
+}
+
+
+#CHECK THE MEMORY USAGE
+memory_usage(){
+	output=$(free -h)
+	echo -e "${CYAN}$output${NC}"
+	
+}
+
+
+#CHECK THE DISK USAGE
+disk_usage(){
+	output=$(df -hT)
+	echo -e "${CYAN}$output${NC}"
+	
+}
+
+
+#CHECK THE NETWORK STATS
+network_stats(){
+	output=$(ifconfig)
+	echo -e "${CYAN}$output${NC}"
+	
+}
+
+
+#SHOW USERS WHO USE THE SYSTEM 
+show_uptime(){
+	output=$(w)
+	echo -e "${CYAN}$output${NC}"
+	
+}
+
+#SHOW THE ERROR LOGS OF THE SYSTEM
+show_logs(){
+	output=$(journalctl -p 3 -xb |tail -n 20)
+	echo -e "${RED}$output${NC}"
+}
+
+#CHECK SERVICES 
+service_checker(){
+	for i in sshd httpd nginx docker firewalld ;
+	do
+		echo -e "${CYAN}[$i]${NC}"
+		active=$(systemctl is-active $i)
+		if [[ $active == active ]]
+		then
+			echo -e "${GREEN}"$i" is active ${NC}"
+		else
+			echo -e "${RED}"$i" is inactive ${NC}"
+		fi
+
+		enabled=$(systemctl is-enabled $i)
+		if  [[ $enabled == enabled ]]
+		then
+			echo -e "${GREEN}$i is enabled ${NC}"
+		else
+			echo -e "${RED}$i is disable ${NC}"
+		fi
+		echo ""
+
+	done
+}
+
+{
+echo "--------------------------------------------------------------------------------------------------------"
+echo -e "${CYAN}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< $(date) >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
+echo "--------------------------------------------------------------------------------------------------------"
+echo -e  "${YELLOW}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 🔥 CPU USAGE & DETAILS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
+echo ""
+cpu_info
+echo ""
+echo "--------------------------------------------------------------------------------------------------------"
+
+echo -e "${YELLOW}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 🧠 Memory Details >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
+echo ""
+memory_usage 
+echo ""
+echo "--------------------------------------------------------------------------------------------------------"
+
+echo -e "${YELLOW}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 📀 Disk Usage and Load >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
+echo ""
+disk_usage 
+echo ""
+echo "--------------------------------------------------------------------------------------------------------"
+
+echo -e "${YELLOW}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 📡 Network Status >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
+echo ""
+network_stats 
+echo ""
+echo "--------------------------------------------------------------------------------------------------------"
+
+echo -e "${YELLOW}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 🖥️ Uptime Details >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
+echo ""
+show_uptime 
+echo ""
+echo "--------------------------------------------------------------------------------------------------------"
+
+echo -e "${YELLOW}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 📝System Logs Errors Only >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
+echo ""
+show_logs 
+echo ""
+echo "--------------------------------------------------------------------------------------------------------"
+
+echo -e "${YELLOW}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ⚙️ Server Checker >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
+echo ""
+service_checker 
+echo ""
+echo "--------------------------------------------------------------------------------------------------------"
+
+} | tee "$HOME/system_check.log"
